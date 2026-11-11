@@ -30,6 +30,11 @@ on:
         required: false
         type: string
         default: ''
+      release-epoch:
+        description: 'UTC epoch used to stamp the release date in the isolated source tree.'
+        required: false
+        type: string
+        default: ''
 
 
 permissions:
@@ -176,11 +181,15 @@ jobs:
         if: inputs.release == true
         env:
           RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_EPOCH: ${{ inputs.release-epoch }}
         run: |
           mkdir -p "$RUNNER_TEMP/release-source"
           git archive "$CANDIDATE_COMMIT" | tar -x -C "$RUNNER_TEMP/release-source"
-          python3 scripts/releases/stamping.py --tree "$RUNNER_TEMP/release-source" \
-            --version "$RELEASE_VERSION"
+          args=(--tree "$RUNNER_TEMP/release-source" --version "$RELEASE_VERSION")
+          if [ -n "$RELEASE_EPOCH" ]; then
+            args+=(--release-date "$(python3 -c 'from datetime import UTC, datetime; import os; d=datetime.fromtimestamp(int(os.environ["RELEASE_EPOCH"]), UTC); print(f"{d.year}.{d.month}.{d.day}")')")
+          fi
+          python3 scripts/releases/stamping.py "${args[@]}"
 
       - name: nix flake check
         # --print-build-logs: a check that fails then prints the assertion

@@ -269,7 +269,7 @@ def test_claim_custody_and_final_payload_identity_reach_every_privileged_phase()
         assert jobs[name]["with"]["version"] == "${{ needs.admit.outputs.version }}"
     assert "version" not in jobs["pm-bundle"]["with"]
     assert "release-epoch" not in jobs["docker"]["with"]
-    assert "release-epoch" not in jobs["nix"]["with"]
+    assert jobs["nix"]["with"]["release-epoch"] == "${{ needs.admit.outputs.release-epoch }}"
     assert "release-epoch" not in jobs["pm-bundle"]["with"]
     assert "release-epoch" not in jobs["publish-docker"]["with"]
     complete = jobs["complete"]["steps"]

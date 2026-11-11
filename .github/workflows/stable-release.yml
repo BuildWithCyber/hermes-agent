@@ -107,6 +107,7 @@ jobs:
       commit: ${{ needs.admit.outputs.commit }}
       release: true
       version: ${{ needs.admit.outputs.version }}
+      release-epoch: ${{ needs.admit.outputs.release-epoch }}
 
   pm-bundle:
     needs: admit
@@ -429,13 +430,15 @@ jobs:
         env:
           RELEASE_COMMIT: ${{ needs.admit.outputs.commit }}
           RELEASE_VERSION: ${{ needs.admit.outputs.version }}
+          RELEASE_EPOCH: ${{ needs.admit.outputs.release-epoch }}
         run: |
           set -euo pipefail
           tree="$RUNNER_TEMP/bootstrap-release"
           mkdir -p "$tree"
           git archive "$RELEASE_COMMIT" | tar -x -C "$tree"
           python3 -m scripts.releases.stamping --tree "$tree" \
-            --version "$RELEASE_VERSION"
+            --version "$RELEASE_VERSION" \
+            --release-date "$(python3 -c 'from datetime import UTC, datetime; import os; d=datetime.fromtimestamp(int(os.environ["RELEASE_EPOCH"]), UTC); print(f"{d.year}.{d.month}.{d.day}")')"
           actual="$(cargo metadata --no-deps --format-version 1 \
             --manifest-path "$tree/apps/bootstrap-installer/src-tauri/Cargo.toml" \
             | jq -r '.packages[] | select(.name == "hermes-bootstrap") | .version')"

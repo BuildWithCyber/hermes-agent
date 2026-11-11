@@ -68,6 +68,33 @@ def test_stamping_only_writes_external_builder_inputs(tmp_path):
         validate_bootstrap_version(build, "0.21.5")
 
 
+def test_stamping_refreshes_release_date_when_supplied(tmp_path):
+    from scripts.releases.stamping import stamp
+
+    build = tmp_path / "build"
+    build.mkdir()
+    _tree(build)
+
+    written = stamp(build, "0.21.5", release_date="2026.11.10")
+
+    init = build / "hermes_cli" / "__init__.py"
+    assert init.read_text(encoding="utf-8").strip() == '__release_date__ = "2026.11.10"'
+    assert init in written
+
+
+def test_stamping_leaves_release_date_untouched_without_date(tmp_path):
+    from scripts.releases.stamping import stamp
+
+    build = tmp_path / "build"
+    build.mkdir()
+    _tree(build)
+
+    stamp(build, "0.21.5")
+
+    init = build / "hermes_cli" / "__init__.py"
+    assert init.read_text(encoding="utf-8").strip() == '__release_date__ = "2026.1.1"'
+
+
 def test_stamping_a_payload_snapshot_without_external_inputs_is_a_noop(tmp_path):
     import shutil
 
